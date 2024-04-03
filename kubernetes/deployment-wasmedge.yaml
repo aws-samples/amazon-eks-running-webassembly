@@ -1,0 +1,45 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wasmedge-hello
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wasmedge-hello
+  template:
+    metadata:
+      labels:
+        app: wasmedge-hello
+    spec:
+      runtimeClassName: wasmedge
+      containers:
+        - name: wasmedge-hello
+          # This would be a best practice. However, the example image wants to run as root, so this is not used here.
+          #securityContext:
+          #  runAsNonRoot: true
+          #  readOnlyRootFilesystem: true
+          #  allowPrivilegeEscalation: false
+          #  seccompProfile:
+          #    type: RuntimeDefault
+          # Example: image: 111122223333.dkr.ecr.aa-example-1.amazonaws.com/wasm-example:latest
+          image: <UPDATE_ACCOUNT_ID>.dkr.ecr.<UPDATE_REGION>.amazonaws.com/wasm-example:latest
+          resources:
+            limits:
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wasmedge-hello
+spec:
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  selector:
+    app: wasmedge-hello

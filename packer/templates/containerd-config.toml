@@ -1,0 +1,8 @@
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.wasmedge]
+runtime_type = "io.containerd.wasmedge.v1"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.wasmedge.options]
+BinaryName = "/bin/containerd-shim-wasmedge-v1"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.spin]
+runtime_type = "io.containerd.spin.v2"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.spin.options]
+BinaryName = "/bin/containerd-shim-spin-v2"

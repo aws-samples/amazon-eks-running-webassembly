@@ -1,0 +1,45 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-spin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-spin
+  template:
+    metadata:
+      labels:
+        app: hello-spin
+    spec:
+      runtimeClassName: spin
+      containers:
+        - name: hello-spin
+          # This would be a best practice. However, the example image wants to run as root, so this is not used here.
+          #securityContext:
+          #  runAsNonRoot: true
+          #  readOnlyRootFilesystem: true
+          #  allowPrivilegeEscalation: false
+          #  seccompProfile:
+          #    type: RuntimeDefault
+          image: ghcr.io/deislabs/containerd-wasm-shims/examples/spin-rust-hello@sha256:da2c07d3bf122b485a13518783cacd95104a9dab0a0f08c102a8089c56cdf40c
+          command: ["/"]
+          resources:
+            limits:
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-spin
+spec:
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  selector:
+    app: hello-spin

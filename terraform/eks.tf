@@ -1,0 +1,139 @@
+data "aws_caller_identity" "current" {}
+data "aws_availability_zones" "available" {}
+
+locals {
+  ####### set this to the AMI-ID output by Packer ####
+  custom_ami_id = "ami-abc1234567890"
+  ####################################################
+  name            = "webassembly-on-eks"
+  cluster_version = "1.29"
+
+  vpc_cidr = "10.0.0.0/16"
+  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
+
+  tags = {
+    Example = local.name
+  }
+}
+
+################################################################################
+# EKS Module
+################################################################################
+
+module "eks" {
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-eks.git?ref=907f70cffdd03e14d1da97d916451cfb0688a760"
+
+  cluster_name                   = local.name
+  cluster_version                = local.cluster_version
+  cluster_endpoint_public_access = true
+
+  cluster_service_ipv4_cidr      = "172.16.0.0/16"
+  cluster_ip_family = "ipv4"
+
+  enable_cluster_creator_admin_permissions = true
+
+  cluster_addons = {
+    coredns = {
+      most_recent = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+    vpc-cni = {
+      most_recent    = true
+      before_compute = true
+    }
+  }
+
+  vpc_id                   = module.vpc.vpc_id
+  subnet_ids               = module.vpc.private_subnets
+  control_plane_subnet_ids = module.vpc.intra_subnets
+
+  eks_managed_node_groups = {
+    webassembly = {
+      attach_cluster_primary_security_group = true
+      iam_role_attach_cni_policy            = true
+      min_size                              = 2
+      max_size                              = 3
+      desired_size                          = 2
+      instance_types                        = ["c6i.xlarge"]
+      ami_type                              = "CUSTOM"
+      platform                              = "linux"
+      ami_id                                = local.custom_ami_id
+      user_data_template_path               = "${path.module}/templates/user-data.tpl"
+      iam_role_additional_policies = {
+        AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      }
+    }
+  }
+
+  tags = local.tags
+}
+
+################################################################################
+# Supporting Resources
+################################################################################
+
+module "vpc" {
+  source  = "git::https://github.com/terraform-aws-modules/terraform-aws-vpc.git?ref=3e793b424af55cca62b1158eb02fd662cc7e4ca1"
+
+  name = local.name
+  cidr = local.vpc_cidr
+
+  azs             = local.azs
+  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
+  intra_subnets   = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 52)]
+
+  enable_nat_gateway     = true
+  single_nat_gateway     = true
+  enable_ipv6            = true
+  create_egress_only_igw = true
+
+  public_subnet_ipv6_prefixes                    = [0, 1, 2]
+  public_subnet_assign_ipv6_address_on_creation  = true
+  private_subnet_ipv6_prefixes                   = [3, 4, 5]
+  private_subnet_assign_ipv6_address_on_creation = true
+  intra_subnet_ipv6_prefixes                     = [6, 7, 8]
+  intra_subnet_assign_ipv6_address_on_creation   = true
+
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
+  }
+
+  tags = local.tags
+}
+
+module "ecr" {
+  source  = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=c587836c05941779277671a79d5cd139fc70feb2"
+
+  repository_name = "wasm-example"
+
+  repository_lifecycle_policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1,
+        description  = "Keep last 7 images",
+        selection = {
+          tagStatus     = "tagged",
+          tagPrefixList = ["v"],
+          countType     = "imageCountMoreThan",
+          countNumber   = 30
+        },
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Terraform   = "true"
+    Environment = "dev"
+  }
+}
