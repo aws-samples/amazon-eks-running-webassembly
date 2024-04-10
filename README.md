@@ -118,13 +118,13 @@ If you now access `http://localhost:8080/hello` in a browser, you should be seei
 
 This means the Spin runtime is working inside your cluster!
 
-## Building your own image and running it with the WasmEdge runtime
+## Building a hello-world image and running it with the WasmEdge runtime
 
 For the next example, you are going to build your own image using Finch and then run it in a deployment.
-Before you do this, update the image parameter with your account-id and region in the `kubernetes/deployment-wasmedge.yaml`file.
+Before you apply the `deployment-wasmedge.yaml`file, update the image parameter with your account-id and region in the `kubernetes/deployment-wasmedge.yaml`file.
 After that, build and run the image:
 ```
-cd build
+cd build/hello-world
 export AWS_ACCOUNT_ID=<UPDATE_ACCOUNT_ID>
 export AWS_REGION=<UPDATE_REGION>
 finch build --tag wasm-example --platform wasi/wasm .
@@ -133,7 +133,8 @@ finch image ls
 finch tag <UPDATE_IMAGE_ID> $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/wasm-example:latest
 aws ecr get-login-password --region $AWS_REGION | finch login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 finch push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/wasm-example:latest
-kubectl apply -f ../kubernetes/deployment-wasmedge.yaml
+# Remeber to update you account-id and region in this file before running this command
+kubectl apply -f ../../kubernetes/deployment-wasmedge.yaml
 ```
 
 Check if the pod has started successfully (this may take a few seconds the first time you run it):
@@ -152,10 +153,54 @@ This means the WasmEdge runtime is working inside your cluster!
 
 Congratulations! You can now run WebAssembly workloads with both the Spin and the WasmEdge runtime on Amazon EKS!
 
+## Building a microservice with a MariaDB backend
+
+For the next example, you are going to build your own image again. This time you are building a small microservice that has a MariaDB backend.
+Before you apply the `deployment-microservice.yaml`file, update the image parameter with your account-id, region and DNS_SERVER variable in the `kubernetes/deployment-microservice.yaml`file.
+Let's build this example:
+```
+cd build/hello-world
+export AWS_ACCOUNT_ID=<UPDATE_ACCOUNT_ID>
+export AWS_REGION=<UPDATE_REGION>
+finch build --tag microservice --platform wasi/wasm .
+# Get your image ID using this command
+finch image ls
+finch tag <UPDATE_IMAGE_ID> $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/microservice:latest
+aws ecr get-login-password --region $AWS_REGION | finch login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+finch push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/microservice:latest
+# Create the secret for the database
+shuf -er -n20  {A..Z} {a..z} {0..9} | tr -d '\n' | kubectl create secret generic db-secret --from-file=password=/dev/stdin
+# Get the IP of your Kubernetes DNS-Service and update the DNS_SERVER variable with it
+kubectl get svc kube-dns -n kube-system -o jsonpath='{.spec.clusterIP}'
+# Remeber to update you account-id, region and DNS_SERVER in this file before running this command
+kubectl apply -f ../../kubernetes/deployment-microservice.yaml
+```
+
+Now, let's see if the pods are runnning and query the microservice:
+```
+# See if the pods are running
+kubectl get pods
+# Forward the port of the service to localhost
+kubectl port-forward service/microservice 8082:8080
+# Initialize the database
+curl http://localhost:8082/init
+# Check for orders (the answer should be empty)
+curl http://localhost:8082/orders
+# Download sample orders and create them in our database
+wget https://raw.githubusercontent.com/second-state/microservice-rust-mysql/main/orders.json
+curl http://localhost:8082/create_orders -X POST -d @orders.json
+# Check for orders again
+curl -s http://localhost:8082/orders | jq
+``` 
+
+That concludes this little demo of running a microservice with WebAssembly in EKS and connecting it to another service.
+Now have fun building with WebAssembly on EKS!
+
 ## Cleaning up
 To clean up the resources you created, run the following commands from inside the repository (you have to confirm the second command):
 ```
 aws ecr batch-delete-image --region $AWS_REGION --repository-name wasm-example --image-ids "$(aws ecr list-images --region $AWS_REGION --repository-name wasm-example --query 'imageIds[*]' --output json)"
+aws ecr batch-delete-image --region $AWS_REGION --repository-name microservice --image-ids "$(aws ecr list-images --region $AWS_REGION --repository-name microservice --query 'imageIds[*]' --output json)"
 cd terraform
 terraform destroy
 ```

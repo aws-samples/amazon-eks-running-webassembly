@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+      - name: mariadb
+        image: mariadb:11.3.2
+        env:
+        - name: MARIADB_RANDOM_ROOT_PASSWORD
+          value: "true"
+        - name: MARIADB_USER
+          value: "db-user"
+        - name: MARIADB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: password
+        - name: MARIADB_DATABASE
+          value: "order-demo"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb
+spec:
+  selector:
+    app: mariadb
+  ports:
+    - port: 3306
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: microservice
+  template:
+    metadata:
+      labels:
+        app: microservice
+    spec:
+      runtimeClassName: wasmedge
+      containers:
+        - name: microservice
+          image: <UPDATE_ACCOUNT_ID>.dkr.ecr.<UPDATE_REGION>.amazonaws.com/microservice:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+          - secretRef:
+              name: db-secret
+          env:
+            - name: DATABASE_URL
+              value: mysql://db-user:$(password)@mariadb.default.svc.cluster.local:3306/order-demo
+            - name: RUST_BACKTRACE
+              value: full
+            - name: DNS_SERVER
+              value: <UPDATE_DNS_SERVICE_IP>:53
+          resources:
+            limits:
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: microservice
+spec:
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: microservice

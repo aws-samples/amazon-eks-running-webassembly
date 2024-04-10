@@ -137,3 +137,32 @@ module "ecr" {
     Environment = "dev"
   }
 }
+
+module "ecr-microservice" {
+  source  = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=c587836c05941779277671a79d5cd139fc70feb2"
+
+  repository_name = "microservice"
+
+  repository_lifecycle_policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1,
+        description  = "Keep last 7 images",
+        selection = {
+          tagStatus     = "tagged",
+          tagPrefixList = ["v"],
+          countType     = "imageCountMoreThan",
+          countNumber   = 30
+        },
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Terraform   = "true"
+    Environment = "dev"
+  }
+}
