@@ -1,7 +1,7 @@
 # Run WebAssembly workloads on Amazon EKS
 
-This repository contains code for building a custom Amazon EKS AMI using [HashiCorp Packer](https://www.packer.io/).
-The AMI includes necessary binaries and configurations to enable you to run WebAssembly workloads in an EKS cluster and is based on Amazon Linux 2023. The runtimes used in this AMI are [Spin](https://github.com/fermyon/spin) and [WasmEdge](https://github.com/WasmEdge/WasmEdge). The respective containerd-shims are used for both runtimes.
+This repository contains code for building custom Amazon EKS AMIs using [HashiCorp Packer](https://www.packer.io/).
+The AMIs include necessary binaries and configurations to enable you to run WebAssembly workloads in an EKS cluster and are based on Amazon Linux 2023. The runtimes used in the AMIs are [Spin](https://github.com/fermyon/spin) and [WasmEdge](https://github.com/WasmEdge/WasmEdge). The respective containerd-shims are used for both runtimes.
 Deploying the cluster is done using [Hashicorp Terraform](https://www.terraform.io/).
 After the cluster is created, RuntimeClasses and example workloads are deployed to the cluster.
 
@@ -52,35 +52,36 @@ Take note of your account-id, as you will need it later.
 > An EKS cluster in itself does not qualify for the AWS free tier as well.
 > You are charged for any EKS cluster you deploy while building this sample.
 
-## 👷 Building the AMI
+## 👷 Building the AMIs
 
-You will need to have a default VPC in the region where the AMI will be created, or provide a subnet ID via the subnet_id variable. The remaining variables are optional and can be modified to suit; either through the `al2023_amd64.pkrvars.hcl` file or by passing via -var 'key=value' on the Packer CLI. See the `variables.pkr.hcl` file for variables that are available for customization.
+You will need to have a default VPC in the region where the AMIs will be created, or provide a subnet ID via the subnet_id variable. The remaining variables are optional and can be modified to suit; either through the `al2023_amd64.pkrvars.hcl` file or by passing via -var 'key=value' on the Packer CLI. See the `variables.pkr.hcl` file for variables that are available for customization.
 
-Before running the commands to create the AMI, do this:
+Before running the commands to create the AMIs, do this:
 
-1. Set the `region` variable inside the `packer/al2023_amd64.pkrvars.hcl` file
+1. Set the `region` variable inside the `packer/al2023_amd64.pkrvars.hcl` file and in the `packer/al2023_arm64.pkrvars.hcl` file
 
-To build the AMI, run the following commands on your CLI from inside the repository:
+To build the AMIs, run the following commands on your CLI from inside the repository:
 ```
 cd packer
 packer init -upgrade .
 packer build -var-file=al2023_amd64.pkrvars.hcl .
+packer build -var-file=al2023_arm64.pkrvars.hcl .
 ```
 
-The build should take about 10 minutes (depending on the instance you choose).
+The builds should take about 10 minutes (depending on the instance you choose).
 After finishing, you see output similar to this:
 ```
 ==> Builds finished. The artifacts of successful builds are:
 --> amazon-eks.amazon-ebs.this: AMIs were created:
 your-region: ami-123456789abc
 ```
-Note the AMI-ID somewhere, you are going to need it in the next step.
+Note the AMI-IDs somewhere, you are going to need it in the next step.
 
 ## Building the EKS cluster
 To build the EKS cluster, you must first do the following:
 
 1. Update the `region` inside the `terraform/providers.tf` file to the same region you have set for Packer inside the `packer/al2023_amd64.pkrvars.hcl` file.
-2. Set the `custom_ami_id` parameter inside the `terraform/eks.tf` file to the AMI-ID from the output of Packer.
+2. Set the `custom_ami_id_amd64` parameter and the `custom_ami_id_arm64` parameter inside the `terraform/eks.tf` file to the matching AMI-IDs from the output of Packer.
 
 To build the cluster, run the following commands on your CLI from inside the repository (you must confirm the last command):
 ```
@@ -150,6 +151,16 @@ kubectl port-forward service/wasmedge-hello 8081:80
 If you now access `http://localhost:8081` in a browser, you should be seeing a message saying "Hello world from WasmEdge!".
 
 This means the WasmEdge runtime is working inside your cluster!
+
+Let's scale this deployment up:
+```
+kubectl scale deployment wasmedge-hello --replicas 20
+# Wait a few seconds for the pods to start
+kubectl get pods
+```
+You should now see 20 pods of your deployment running in the cluster.
+Notice how you did not do a multi-architecture build for the container image, but only specified `wasi/wasm` as the platform, but your pods run on both ARM64 and AMD64 nodes.
+This is what WebAssembly enables you to do!
 
 Congratulations! You can now run WebAssembly workloads with both the Spin and the WasmEdge runtime on Amazon EKS!
 
