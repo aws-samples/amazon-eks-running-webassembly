@@ -27,8 +27,8 @@ module "eks" {
   cluster_name                   = local.name
   cluster_version                = local.cluster_version
   cluster_endpoint_public_access = true
-  cluster_ip_family = "ipv6"
-  create_cni_ipv6_iam_policy = true
+  cluster_ip_family              = "ipv6"
+  create_cni_ipv6_iam_policy     = true
 
   enable_cluster_creator_admin_permissions = true
 
@@ -92,7 +92,7 @@ module "eks" {
 ################################################################################
 
 module "vpc" {
-  source  = "git::https://github.com/terraform-aws-modules/terraform-aws-vpc.git?ref=c182453f881ae77afd14c826dc8e23498b957907"
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-vpc.git?ref=c182453f881ae77afd14c826dc8e23498b957907"
 
   name = local.name
   cidr = local.vpc_cidr
@@ -126,7 +126,7 @@ module "vpc" {
 }
 
 module "ecr" {
-  source  = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=fdbadc3f33db32e97fa7452dfc509b813f07b411"
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=fdbadc3f33db32e97fa7452dfc509b813f07b411"
 
   repository_name = "wasm-example"
 
@@ -155,7 +155,7 @@ module "ecr" {
 }
 
 module "ecr-microservice" {
-  source  = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=fdbadc3f33db32e97fa7452dfc509b813f07b411"
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=fdbadc3f33db32e97fa7452dfc509b813f07b411"
 
   repository_name = "microservice"
 
