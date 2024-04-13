@@ -26,7 +26,7 @@ shell_provisioner1 = {
     "scripts/cleanup.sh"
   ]
   environment_vars = [
-    "wasmedge_shim_download_url=https://github.com/containerd/runwasi/releases/download/containerd-shim-wasmedge%2Fv0.3.0/containerd-shim-wasmedge-x86_64.tar.gz",
+    "wasmedge_shim_download_url=https://github.com/containerd/runwasi/releases/download/containerd-shim-wasmedge%2Fv0.4.0/containerd-shim-wasmedge-x86_64.tar.gz",
     "spin_shim_download_url=https://github.com/deislabs/containerd-wasm-shims/releases/download/v0.11.1/containerd-wasm-shims-v2-spin-linux-x86_64.tar.gz"
   ]
 }
