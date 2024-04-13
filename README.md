@@ -217,11 +217,13 @@ terraform destroy
 ```
 
 This will take around 15 minutes to complete again.
-After that you still have to delete the custom AMI and its snapshots. For this you run these commands:
+After that you still have to delete the custom AMIs and their snapshots. For this you run these commands:
 ```
-Snapshots="$(aws ec2 describe-images --image-ids <UPDATE_AMI_ID> --region <UPDATE_REGION> --query 'Images[*].BlockDeviceMappings[*].Ebs.SnapshotId' --output text)"
+Snapshots="$(aws ec2 describe-images --image-ids <UPDATE_AMI_ID_AMD64> --region <UPDATE_REGION> --query 'Images[*].BlockDeviceMappings[*].Ebs.SnapshotId' --output text)"
+Snapshots="$(aws ec2 describe-images --image-ids <UPDATE_AMI_ID_ARM64> --region <UPDATE_REGION> --query 'Images[*].BlockDeviceMappings[*].Ebs.SnapshotId' --output text)"
 
-aws ec2 deregister-image --image-id <UPDATE_AMI_ID> --region <UPDATE_REGION>
+aws ec2 deregister-image --image-id <UPDATE_AMI_ID_AMD64> --region <UPDATE_REGION>
+aws ec2 deregister-image --image-id <UPDATE_AMI_ID_ARM64> --region <UPDATE_REGION>
 
 for SNAPSHOT in $Snapshots ; do aws ec2 delete-snapshot --snapshot-id $SNAPSHOT; done
 ```
