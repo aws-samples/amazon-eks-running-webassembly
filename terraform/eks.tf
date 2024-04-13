@@ -27,9 +27,8 @@ module "eks" {
   cluster_name                   = local.name
   cluster_version                = local.cluster_version
   cluster_endpoint_public_access = true
-
-  cluster_service_ipv4_cidr      = "172.16.0.0/16"
-  cluster_ip_family = "ipv4"
+  cluster_ip_family = "ipv6"
+  create_cni_ipv6_iam_policy = true
 
   enable_cluster_creator_admin_permissions = true
 
@@ -51,7 +50,7 @@ module "eks" {
   control_plane_subnet_ids = module.vpc.intra_subnets
 
   eks_managed_node_groups = {
-    webassembly = {
+    webassembly_amd64 = {
       attach_cluster_primary_security_group = true
       iam_role_attach_cni_policy            = true
       min_size                              = 2
