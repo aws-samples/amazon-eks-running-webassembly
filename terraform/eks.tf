@@ -22,7 +22,7 @@ locals {
 ################################################################################
 
 module "eks" {
-  source = "git::https://github.com/terraform-aws-modules/terraform-aws-eks.git?ref=907f70cffdd03e14d1da97d916451cfb0688a760"
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-eks.git?ref=e2a39c0f261d776e4e18a650aa9068429c4f5ef4"
 
   cluster_name                   = local.name
   cluster_version                = local.cluster_version
@@ -93,7 +93,7 @@ module "eks" {
 ################################################################################
 
 module "vpc" {
-  source  = "git::https://github.com/terraform-aws-modules/terraform-aws-vpc.git?ref=3e793b424af55cca62b1158eb02fd662cc7e4ca1"
+  source  = "git::https://github.com/terraform-aws-modules/terraform-aws-vpc.git?ref=c182453f881ae77afd14c826dc8e23498b957907"
 
   name = local.name
   cidr = local.vpc_cidr
@@ -127,7 +127,7 @@ module "vpc" {
 }
 
 module "ecr" {
-  source  = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=c587836c05941779277671a79d5cd139fc70feb2"
+  source  = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=fdbadc3f33db32e97fa7452dfc509b813f07b411"
 
   repository_name = "wasm-example"
 
@@ -156,7 +156,7 @@ module "ecr" {
 }
 
 module "ecr-microservice" {
-  source  = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=c587836c05941779277671a79d5cd139fc70feb2"
+  source  = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=fdbadc3f33db32e97fa7452dfc509b813f07b411"
 
   repository_name = "microservice"
 
