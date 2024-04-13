@@ -223,6 +223,8 @@ Snapshots="$(aws ec2 describe-images --image-ids <UPDATE_AMI_ID_AMD64> --region 
 
 aws ec2 deregister-image --image-id <UPDATE_AMI_ID_AMD64> --region <UPDATE_REGION>
 
+for SNAPSHOT in $Snapshots ; do aws ec2 delete-snapshot --snapshot-id $SNAPSHOT; done
+
 Snapshots="$(aws ec2 describe-images --image-ids <UPDATE_AMI_ID_ARM64> --region <UPDATE_REGION> --query 'Images[*].BlockDeviceMappings[*].Ebs.SnapshotId' --output text)"
 
 aws ec2 deregister-image --image-id <UPDATE_AMI_ID_ARM64> --region <UPDATE_REGION>
