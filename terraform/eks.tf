@@ -3,7 +3,8 @@ data "aws_availability_zones" "available" {}
 
 locals {
   ####### set this to the AMI-ID output by Packer ####
-  custom_ami_id = "ami-abc1234567890"
+  custom_ami_id_amd64 = "ami-abc1234567890"
+  custom_ami_id_arm64 = "ami-abc1234567890"
   ####################################################
   name            = "webassembly-on-eks"
   cluster_version = "1.29"
@@ -59,7 +60,23 @@ module "eks" {
       instance_types                        = ["c6i.xlarge"]
       ami_type                              = "CUSTOM"
       platform                              = "linux"
-      ami_id                                = local.custom_ami_id
+      ami_id                                = local.custom_ami_id_amd64
+      user_data_template_path               = "${path.module}/templates/user-data.tpl"
+      iam_role_additional_policies = {
+        AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      }
+    }
+    webassembly_arm64 = {
+      attach_cluster_primary_security_group = true
+      iam_role_attach_cni_policy            = true
+      min_size                              = 2
+      max_size                              = 3
+      desired_size                          = 2
+      instance_types                        = ["c6g.xlarge"]
+      ami_type                              = "CUSTOM"
+      platform                              = "linux"
+      ami_id                                = local.custom_ami_id_arm64
       user_data_template_path               = "${path.module}/templates/user-data.tpl"
       iam_role_additional_policies = {
         AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
