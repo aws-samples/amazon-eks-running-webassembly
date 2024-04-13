@@ -11,5 +11,5 @@ spec:
     name: ${cluster_name}
     apiServerEndpoint: ${cluster_endpoint}
     certificateAuthority: ${cluster_auth_base64}
-    cidr: ${cluster_service_ipv4_cidr}
+    cidr: ${cluster_service_cidr}
 --BOUNDARY--
