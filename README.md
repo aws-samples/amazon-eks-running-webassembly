@@ -129,13 +129,10 @@ cd build/hello-world
 export AWS_ACCOUNT_ID=<UPDATE_ACCOUNT_ID>
 export AWS_REGION=<UPDATE_REGION>
 finch build --tag wasm-example --platform wasi/wasm .
-# Get your image ID using this command
-finch image ls
-finch tag <UPDATE_IMAGE_ID> $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/wasm-example:latest
+finch tag wasm-example:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/wasm-example:latest
 aws ecr get-login-password --region $AWS_REGION | finch login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 finch push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/wasm-example:latest
-# Remeber to update you account-id and region in this file before running this command
-kubectl apply -f ../../kubernetes/deployment-wasmedge.yaml
+envsubst < ../../kubernetes/deployment-wasmedge.yaml | kubectl apply -f -
 ```
 
 Check if the pod has started successfully (this may take a few seconds the first time you run it):
@@ -174,17 +171,14 @@ cd build/hello-world
 export AWS_ACCOUNT_ID=<UPDATE_ACCOUNT_ID>
 export AWS_REGION=<UPDATE_REGION>
 finch build --tag microservice --platform wasi/wasm .
-# Get your image ID using this command
-finch image ls
-finch tag <UPDATE_IMAGE_ID> $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/microservice:latest
+finch tag microservice:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/microservice:latest
 aws ecr get-login-password --region $AWS_REGION | finch login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 finch push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/microservice:latest
 # Create the secret for the database
 shuf -er -n20  {A..Z} {a..z} {0..9} | tr -d '\n' | kubectl create secret generic db-secret --from-file=password=/dev/stdin
 # Get the IP of your Kubernetes DNS-Service and update the DNS_SERVER variable with it
 kubectl get svc kube-dns -n kube-system -o jsonpath='{.spec.clusterIP}'
-# Remeber to update you account-id, region and DNS_SERVER in this file before running this command
-kubectl apply -f ../../kubernetes/deployment-microservice.yaml
+envsubst < ../../kubernetes/deployment-microservice.yaml | kubectl apply -f -
 ```
 
 Now, let's see if the pods are runnning and query the microservice:
@@ -219,17 +213,20 @@ terraform destroy
 This will take around 15 minutes to complete again.
 After that you still have to delete the custom AMIs and their snapshots. For this you run these commands:
 ```
-Snapshots="$(aws ec2 describe-images --image-ids <UPDATE_AMI_ID_AMD64> --region <UPDATE_REGION> --query 'Images[*].BlockDeviceMappings[*].Ebs.SnapshotId' --output text)"
+export AMI_ID_AMD64=<UPDATE_AMI_ID_AMD64>
+export AMI_ID_ARM64=<UPDATE_AMI_ID_ARM64>
+export AWS_REGION=<UPDATE_REGION>
+Snapshots="$(aws ec2 describe-images --image-ids $AMI_ID_AMD64 --region $AWS_REGION --query 'Images[*].BlockDeviceMappings[*].Ebs.SnapshotId' --output text)"
 
-aws ec2 deregister-image --image-id <UPDATE_AMI_ID_AMD64> --region <UPDATE_REGION>
-
-for SNAPSHOT in $Snapshots ; do aws ec2 delete-snapshot --snapshot-id $SNAPSHOT; done
-
-Snapshots="$(aws ec2 describe-images --image-ids <UPDATE_AMI_ID_ARM64> --region <UPDATE_REGION> --query 'Images[*].BlockDeviceMappings[*].Ebs.SnapshotId' --output text)"
-
-aws ec2 deregister-image --image-id <UPDATE_AMI_ID_ARM64> --region <UPDATE_REGION>
+aws ec2 deregister-image --image-id $AMI_ID_AMD64 --region $AWS_REGION
 
 for SNAPSHOT in $Snapshots ; do aws ec2 delete-snapshot --snapshot-id $SNAPSHOT; done
+
+Snapshots="$(aws ec2 describe-images --image-ids $AMI_ID_ARM64 --region $AWS_REGION --query 'Images[*].BlockDeviceMappings[*].Ebs.SnapshotId' --output text)"
+
+aws ec2 deregister-image --image-id $AMI_ID_ARM64 --region $AWS_REGION
+
+for SNAPSHOT in $Snapshots ; do aws ec2 delete-snapshot --snapshot-id $SNAPSHOT --region $AWS_REGION; done
 ```
 
 ## 🔒 Security
