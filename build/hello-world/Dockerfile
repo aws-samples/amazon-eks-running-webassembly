@@ -7,7 +7,7 @@ COPY src ./src
 RUN <<EOT bash
     set -ex
     apt-get update
-    apt-get install -y git clang wget
+    apt-get install -y git clang
     rustup target add wasm32-wasi
     cargo build --target wasm32-wasi --release
 EOT
