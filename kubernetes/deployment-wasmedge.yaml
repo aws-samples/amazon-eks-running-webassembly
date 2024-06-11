@@ -24,7 +24,7 @@ spec:
           #  seccompProfile:
           #    type: RuntimeDefault
           # Example: image: 111122223333.dkr.ecr.aa-example-1.amazonaws.com/wasm-example:latest
-          image: <UPDATE_ACCOUNT_ID>.dkr.ecr.<UPDATE_REGION>.amazonaws.com/wasm-example:latest
+          image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/wasm-example:latest
           resources:
             limits:
               memory: 128Mi
