@@ -122,8 +122,7 @@ This means the Spin runtime is working inside your cluster!
 ## Building a hello-world image and running it with the WasmEdge runtime
 
 For the next example, you are going to build your own image using Finch and then run it in a deployment.
-Before you apply the `deployment-wasmedge.yaml`file, update the image parameter with your account-id and region in the `kubernetes/deployment-wasmedge.yaml`file.
-After that, build and run the image:
+To build and run the image, run these commands:
 ```
 cd build/hello-world
 export AWS_ACCOUNT_ID=<UPDATE_ACCOUNT_ID>
@@ -164,7 +163,7 @@ Congratulations! You can now run WebAssembly workloads with both the Spin and th
 ## Building a microservice with a MariaDB backend
 
 For the next example, you are going to build your own image again. This time you are building a small microservice that has a MariaDB backend.
-Before you apply the `deployment-microservice.yaml`file, update the image parameter with your account-id, region and DNS_SERVER variable in the `kubernetes/deployment-microservice.yaml`file.
+Before you apply the `deployment-microservice.yaml`file, update the DNS_SERVER variable in the `kubernetes/deployment-microservice.yaml`file.
 Let's build this example:
 ```
 cd build/hello-world
