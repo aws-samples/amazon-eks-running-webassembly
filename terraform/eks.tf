@@ -126,7 +126,7 @@ module "vpc" {
 }
 
 module "ecr" {
-  source = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=fdbadc3f33db32e97fa7452dfc509b813f07b411"
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=df965a8501c9256c1893bb9d65fc2c037ffa1257"
 
   repository_name = "wasm-example"
 
@@ -155,7 +155,7 @@ module "ecr" {
 }
 
 module "ecr-microservice" {
-  source = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=fdbadc3f33db32e97fa7452dfc509b813f07b411"
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-ecr.git?ref=df965a8501c9256c1893bb9d65fc2c037ffa1257"
 
   repository_name = "microservice"
 
