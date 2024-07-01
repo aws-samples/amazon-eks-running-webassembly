@@ -92,7 +92,7 @@ module "eks" {
 ################################################################################
 
 module "vpc" {
-  source = "git::https://github.com/terraform-aws-modules/terraform-aws-vpc.git?ref=c182453f881ae77afd14c826dc8e23498b957907"
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-vpc.git?ref=4a2809c673afa13097af98c2e3c553da8db766a9"
 
   name = local.name
   cidr = local.vpc_cidr
