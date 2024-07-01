@@ -7,7 +7,7 @@ locals {
   custom_ami_id_arm64 = "ami-abc1234567890"
   ####################################################
   name            = "webassembly-on-eks"
-  cluster_version = "1.29"
+  cluster_version = "1.30"
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
