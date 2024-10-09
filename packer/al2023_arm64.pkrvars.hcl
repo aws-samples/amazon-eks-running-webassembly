@@ -28,6 +28,6 @@ shell_provisioner1 = {
   ]
   environment_vars = [
     "wasmedge_shim_download_url=https://github.com/containerd/runwasi/releases/download/containerd-shim-wasmedge%2Fv0.4.0/containerd-shim-wasmedge-aarch64.tar.gz",
-    "spin_shim_download_url=https://github.com/deislabs/containerd-wasm-shims/releases/download/v0.11.1/containerd-wasm-shims-v2-spin-linux-aarch64.tar.gz"
+    "spin_shim_download_url=https://github.com/spinkube/containerd-shim-spin/releases/download/v0.15.1/containerd-shim-spin-v2-linux-x86_64.tar.gz"
   ]
 }
