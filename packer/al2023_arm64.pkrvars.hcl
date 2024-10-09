@@ -1,7 +1,7 @@
 ######## set this to your region ########
 region = "aa-example-1"
 #########################################
-eks_version     = "1.29"
+eks_version     = "1.31"
 instance_type   = "c6g.large"
 architecture    = "arm64"
 ami_description = "Amazon EKS Kubernetes AMI based on AmazonLinux2023 OS"
